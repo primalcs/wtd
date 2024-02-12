@@ -39,11 +39,10 @@ class _ReelConfigPageState extends State<ReelConfigPage> {
   }
 
   Widget newListCard(String text) => SelectableCard(
-        text: text,
-        tapInsideFunction: _setCurrentListName,
-        colorDefault: Colors.lightBlue,
-        colorSelected: Colors.blueGrey,
-      );
+      text: text,
+      tapInsideFunction: _setCurrentListName,
+      colorDefault: Theme.of(context).cardColor,
+      colorSelected: Theme.of(context).highlightColor);
 
   void resizeBars(double dx) {
     if ((dx < 0 && _allListWidth + dx > _minAllListWidth) ||
@@ -132,7 +131,6 @@ class _ReelConfigPageState extends State<ReelConfigPage> {
           // All list
           GestureDetector(
             child: SizedBox(
-              // decoration: const BoxDecoration(color: Colors.red),
               width: _allListWidth,
               child: Column(
                 children: [
@@ -180,7 +178,6 @@ class _ReelConfigPageState extends State<ReelConfigPage> {
           GestureDetector(
             child: SizedBox(
               width: _currentListWidth,
-              // decoration: const BoxDecoration(color: Colors.blue),
               child: Column(
                 children: [
                   Flexible(
@@ -230,11 +227,18 @@ class _ReelConfigPageState extends State<ReelConfigPage> {
   }
 }
 
-Card newCard(text) => Card(
-      child: Padding(
-        padding: const EdgeInsets.all(8),
-        child: Center(child: Text(text)),
-      ),
+Widget newCard(text) => Row(
+      children: [
+        Flexible(
+          child: Card(
+            child: Padding(
+              padding: const EdgeInsets.all(8),
+              child: Center(child: Text(text)),
+            ),
+          ),
+        ),
+        IconButton(onPressed: () {}, icon: const Icon(Icons.delete))
+      ],
     );
 
 class SelectableCard extends StatefulWidget {
@@ -256,25 +260,32 @@ class _SelectableCardState extends State<SelectableCard> {
   Color? _color;
   @override
   Widget build(BuildContext context) {
-    return TapRegion(
-      onTapInside: (event) {
-        setState(() {
-          _color = widget.colorSelected;
-          widget.tapInsideFunction(widget.text);
-        });
-      },
-      onTapOutside: (event) {
-        setState(() {
-          _color = widget.colorDefault;
-        });
-      },
-      child: Card(
-        color: _color ?? widget.colorDefault,
-        child: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Center(child: Text(widget.text)),
+    return Row(
+      children: [
+        IconButton(onPressed: () {}, icon: const Icon(Icons.delete)),
+        Flexible(
+          child: TapRegion(
+            onTapInside: (event) {
+              setState(() {
+                _color = widget.colorSelected;
+                widget.tapInsideFunction(widget.text);
+              });
+            },
+            onTapOutside: (event) {
+              setState(() {
+                _color = widget.colorDefault;
+              });
+            },
+            child: Card(
+              color: _color ?? widget.colorDefault,
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Center(child: Text(widget.text)),
+              ),
+            ),
+          ),
         ),
-      ),
+      ],
     );
   }
 }

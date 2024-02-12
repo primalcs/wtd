@@ -33,4 +33,13 @@ class Helper {
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
     return await sharedPreferences.setStringList(allListsKeyName, value);
   }
+
+  static Future<bool> deleteWholeList(String value) async {
+    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+    List<String> allList =
+        sharedPreferences.getStringList(allListsKeyName) ?? [];
+    allList.remove(value);
+    await sharedPreferences.setStringList(allListsKeyName, allList);
+    return await sharedPreferences.remove(value);
+  }
 }

@@ -4,17 +4,17 @@ class Helper {
   static const String _currentListKeyName = '%curKey%';
   static const String allListsKeyName = '%allKey%';
 
-  static Future<bool> setSpecificList(key, value) async {
+  static Future<bool> setSpecificList(String key, List<String> value) async {
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
     return await sharedPreferences.setStringList(key, value);
   }
 
-  static Future<List<String>> getSpecificList(key) async {
+  static Future<List<String>> getSpecificList(String key) async {
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
     return sharedPreferences.getStringList(key) ?? [];
   }
 
-  static Future<bool> setCurrentListName(value) async {
+  static Future<bool> setCurrentListName(String value) async {
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
     return await sharedPreferences.setString(_currentListKeyName, value);
   }
@@ -29,7 +29,7 @@ class Helper {
     return sharedPreferences.getStringList(allListsKeyName) ?? ['default'];
   }
 
-  static Future<bool> setAllListsNames(value) async {
+  static Future<bool> setAllListsNames(List<String> value) async {
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
     return await sharedPreferences.setStringList(allListsKeyName, value);
   }

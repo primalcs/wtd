@@ -14,30 +14,37 @@ class ReelPage extends StatefulWidget {
 class _ReelPageState extends State<ReelPage> {
   late List<Widget> children;
   late ReelWidget reel;
-  var _currentList = [];
+  List<String> _currentList = [];
+  String _currentListName = "";
 
   @override
   void initState() {
     super.initState();
-    // _prepare();
+    _prepare();
     _loadList();
   }
 
   void _prepare() async {
-    var key = await Helper.getCurrentListName();
-    await Helper.setSpecificList(key, ["lol", "nuleviy"]);
+    // var key = await Helper.getCurrentListName();
+    Helper.setSpecificList("cobold", ["nol", "celkoviy"]);
+    Helper.setSpecificList("default", ["Do nothing"]);
+    Helper.setAllListsNames(["default", "cobold"]);
+    await Helper.setCurrentListName("cobold");
   }
 
-  void _loadList() async {
-    var key = await Helper.getCurrentListName();
-    var currentList = await Helper.getSpecificList(key);
+  void _loadList({String name = ""}) async {
+    if (name.isEmpty) {
+      name = await Helper.getCurrentListName();
+    }
+    _currentListName = name;
+    var currentList = await Helper.getSpecificList(name);
     if (currentList.isEmpty) return;
     setState(() {
-      reinit(currentList);
+      _reinit(currentList);
     });
   }
 
-  void reinit(currentList) {
+  void _reinit(currentList) {
     _currentList = currentList;
     children = [for (var t in _currentList) CardWidget(text: t)];
     reel = ReelWidget(
@@ -46,9 +53,13 @@ class _ReelPageState extends State<ReelPage> {
     );
   }
 
+  Widget createHeader() {
+    return ExpandingListView(mode: false, currentText: _currentListName);
+  }
+
   @override
   Widget build(BuildContext context) {
-    reinit(_currentList);
+    _reinit(_currentList);
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
@@ -59,6 +70,23 @@ class _ReelPageState extends State<ReelPage> {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
+            DropdownMenu(
+              // controller: iconController,
+              requestFocusOnTap: true,
+              label: const Text('Activities'),
+              inputDecorationTheme: const InputDecorationTheme(
+                // filled: true,
+                contentPadding: EdgeInsets.symmetric(vertical: 5.0),
+              ),
+              onSelected: (icon) {
+                setState(() {
+                  // selectedIcon = icon;
+                });
+              },
+              dropdownMenuEntries: [
+                DropdownMenuEntry(value: "value", label: "label")
+              ],
+            ),
             reel,
             TextButton(
               child: const Text(
@@ -70,5 +98,33 @@ class _ReelPageState extends State<ReelPage> {
         ),
       ),
     );
+  }
+}
+
+class ExpandingListView extends StatefulWidget {
+  final bool mode;
+  final String currentText;
+  const ExpandingListView(
+      {Key? key, required this.mode, required this.currentText})
+      : super(key: key);
+
+  @override
+  _ExpandingListViewState createState() => _ExpandingListViewState();
+}
+
+class _ExpandingListViewState extends State<ExpandingListView> {
+  @override
+  Widget build(BuildContext context) {
+    if (!widget.mode) {
+      return Flexible(
+        child: Card(
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Text(widget.currentText),
+          ),
+        ),
+      );
+    }
+    return Container();
   }
 }

@@ -21,6 +21,7 @@ class ReelWidget extends StatefulWidget {
   }
 
   void runAnimation() async {
+    if (children.length <= 1) return;
     _scrollController.jumpTo(0);
     for (int i = 0; i < Random().nextInt(5) + 3; i++) {
       await _scrollController.animateTo(wholeSize,
@@ -87,7 +88,7 @@ class CardWidget extends StatelessWidget {
         await Clipboard.setData(ClipboardData(text: text)).then((value) =>
             ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text("Copied to clipboard"))));
-      }, 
+      },
       child: Card(
         child: Padding(
           padding: const EdgeInsets.all(8.0),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:wtdapp/reel_config/custom_list_views.dart';
 import 'package:wtdapp/utils/storage_service.dart';
 
 class ReelConfigPage extends StatefulWidget {
@@ -10,6 +11,7 @@ class ReelConfigPage extends StatefulWidget {
 }
 
 class _ReelConfigPageState extends State<ReelConfigPage> {
+  final Helper helper = Helper();
   String _currentListName = "";
   List<String> _currentList = [];
   CurrentListView _currentListWidgets = CurrentListView(
@@ -45,28 +47,8 @@ class _ReelConfigPageState extends State<ReelConfigPage> {
   @override
   void initState() {
     super.initState();
-    Helper.setSpecificList("cobold", ["nol", "celkoviy"]);
-    Helper.setSpecificList("default", ["Do nothing"]);
-    Helper.setAllListsNames(["default", "cobold"]);
     _loadAllList();
   }
-
-  Widget newCard(text) => Row(
-        children: [
-          Flexible(
-            child: Card(
-              child: Padding(
-                padding: const EdgeInsets.all(8),
-                child: Center(child: Text(text)),
-              ),
-            ),
-          ),
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(Icons.delete),
-          )
-        ],
-      );
 
   void resizeBars(double dx) {
     if ((dx < 0 && _allListWidth + dx > _minAllListWidth) ||
@@ -86,7 +68,7 @@ class _ReelConfigPageState extends State<ReelConfigPage> {
     if (listName == _currentListName) {
       return;
     }
-    var currentList = await Helper.getSpecificList(listName);
+    var currentList = await helper.getSpecificList(listName);
     _currentList = currentList;
 
     setState(() {
@@ -97,7 +79,7 @@ class _ReelConfigPageState extends State<ReelConfigPage> {
   void _addToCurrentList(String text) async {
     if (_currentListName.isEmpty) return;
     _currentList.add(text);
-    await Helper.setSpecificList(_currentListName, _currentList);
+    await helper.setSpecificList(_currentListName, _currentList);
     setState(() {
       _reinitCurrentListWidgets();
     });
@@ -105,13 +87,13 @@ class _ReelConfigPageState extends State<ReelConfigPage> {
 
   void _onCurrentListReorder(List<String> children) async {
     _currentList = children;
-    await Helper.setSpecificList(_currentListName, children);
+    await helper.setSpecificList(_currentListName, children);
     // _reinitCurrentListWidgets();
   }
 
   void _onCurrentListDelete(int index) async {
     _currentList.removeAt(index);
-    await Helper.setSpecificList(_currentListName, _currentList);
+    await helper.setSpecificList(_currentListName, _currentList);
     _reinitCurrentListWidgets();
   }
 
@@ -127,7 +109,7 @@ class _ReelConfigPageState extends State<ReelConfigPage> {
 
   // AllList
   void _loadAllList() async {
-    var allList = await Helper.getAllListsNames();
+    var allList = await helper.getAllListsNames();
     if (allList.isEmpty) return;
     setState(() {
       _allLists = allList;
@@ -138,7 +120,7 @@ class _ReelConfigPageState extends State<ReelConfigPage> {
   void _addToAllLists(String text) async {
     if (_allLists.contains(text)) return;
     _allLists.add(text);
-    await Helper.setSpecificList(Helper.allListsKeyName, _allLists);
+    await helper.setSpecificList(Helper.allListsKeyName, _allLists);
     setState(() {
       _reinitAllListWidgets();
     });
@@ -149,7 +131,7 @@ class _ReelConfigPageState extends State<ReelConfigPage> {
     _currentList = [];
     String listName = _allLists.elementAt(index);
     _allLists.removeAt(index);
-    await Helper.deleteWholeList(listName);
+    await helper.deleteWholeList(listName);
     setState(() {
       _reinitCurrentListWidgets();
       _reinitAllListWidgets();
@@ -158,7 +140,7 @@ class _ReelConfigPageState extends State<ReelConfigPage> {
 
   void _onAllListReorder(List<String> children) async {
     _allLists = children;
-    await Helper.setAllListsNames(children);
+    await helper.setAllListsNames(children);
   }
 
   void _reinitAllListWidgets() {
@@ -281,157 +263,6 @@ class _ReelConfigPageState extends State<ReelConfigPage> {
           ),
         ],
       ),
-    );
-  }
-}
-
-class AllListView extends StatefulWidget {
-  final Color? colorSelected, colorDefault;
-  final List<String> childrenList;
-  final Function onTapFunction;
-  final Function onDeleteFunction;
-  final Function onReorderFunction;
-
-  const AllListView({
-    Key? key,
-    this.colorSelected,
-    this.colorDefault,
-    required this.childrenList,
-    required this.onTapFunction,
-    required this.onDeleteFunction,
-    required this.onReorderFunction,
-  }) : super(key: key);
-
-  @override
-  _AllListViewState createState() => _AllListViewState();
-}
-
-class _AllListViewState extends State<AllListView> {
-  int selectedIndex = -1;
-  @override
-  Widget build(BuildContext context) {
-    return ReorderableListView.builder(
-        reverse: true,
-        itemCount: widget.childrenList.length,
-        itemBuilder: (context, index) {
-          return ListTile(
-            key: Key("$index"),
-            tileColor: selectedIndex == index
-                ? widget.colorSelected
-                : widget.colorDefault,
-            title: TapRegion(
-              child: Container(
-                decoration: const BoxDecoration(),
-                child: Center(child: Text(widget.childrenList[index])),
-              ),
-              onTapInside: (event) {
-                if (selectedIndex == index) {
-                  return;
-                }
-                widget.onTapFunction(widget.childrenList[index]);
-                setState(() {
-                  selectedIndex = index;
-                });
-              },
-            ),
-            leading: Visibility(
-              visible: selectedIndex == index,
-              child: IconButton(
-                  onPressed: () {
-                    widget.onDeleteFunction(index);
-                    setState(() {});
-                  },
-                  icon: const Icon(Icons.delete)),
-            ),
-          );
-        },
-        onReorder: (oldIndex, newIndex) {
-          setState(() {
-            if (oldIndex < newIndex) {
-              newIndex -= 1;
-            }
-            final String item = widget.childrenList.removeAt(oldIndex);
-            widget.childrenList.insert(newIndex, item);
-            widget.onReorderFunction(widget.childrenList);
-            selectedIndex = -1;
-          });
-        });
-  }
-}
-
-class CurrentListView extends StatefulWidget {
-  final Color? colorSelected, colorDefault;
-  final List<String> childrenList;
-  final Function onDeleteFunction;
-  final Function onReorderFunction;
-
-  const CurrentListView({
-    Key? key,
-    this.colorSelected,
-    this.colorDefault,
-    required this.childrenList,
-    required this.onDeleteFunction,
-    required this.onReorderFunction,
-  }) : super(key: key);
-
-  @override
-  _CurrentListViewState createState() => _CurrentListViewState();
-}
-
-class _CurrentListViewState extends State<CurrentListView> {
-  int selectedIndex = -1;
-  @override
-  Widget build(BuildContext context) {
-    return ReorderableListView.builder(
-      reverse: true,
-      itemCount: widget.childrenList.length,
-      itemBuilder: (context, index) {
-        return ListTile(
-          tileColor: selectedIndex == index
-              ? widget.colorSelected
-              : widget.colorDefault,
-          key: Key("$index"),
-          title: TapRegion(
-            child: Container(
-              decoration: const BoxDecoration(),
-              child: Center(child: Text(widget.childrenList[index])),
-            ),
-            onTapInside: (event) {
-              if (selectedIndex == index) {
-                return;
-              }
-              setState(() {
-                selectedIndex = index;
-              });
-            },
-            // onTapOutside: (event) {
-            //   setState(() {
-            //     selectedIndex = -1;
-            //   });
-            // },
-          ),
-          leading: Visibility(
-            visible: selectedIndex == index,
-            child: IconButton(
-                onPressed: () {
-                  widget.onDeleteFunction(index);
-                  setState(() {});
-                },
-                icon: const Icon(Icons.delete)),
-          ),
-        );
-      },
-      onReorder: (oldIndex, newIndex) {
-        setState(() {
-          if (oldIndex < newIndex) {
-            newIndex -= 1;
-          }
-          final String item = widget.childrenList.removeAt(oldIndex);
-          widget.childrenList.insert(newIndex, item);
-          widget.onReorderFunction(widget.childrenList);
-          selectedIndex = -1;
-        });
-      },
     );
   }
 }

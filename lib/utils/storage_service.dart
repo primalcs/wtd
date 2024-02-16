@@ -1,45 +1,62 @@
+import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class Helper {
+class Singleton {}
+
+class Helper extends ChangeNotifier {
+  static final Helper _singleton = Helper._internal();
+  factory Helper() {
+    return _singleton;
+  }
+  Helper._internal();
+
   static const String _currentListKeyName = '%curKey%';
   static const String allListsKeyName = '%allKey%';
 
-  static Future<bool> setSpecificList(String key, List<String> value) async {
+  Future<bool> setSpecificList(String key, List<String> value) async {
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
-    return await sharedPreferences.setStringList(key, value);
+    var res = await sharedPreferences.setStringList(key, value);
+    notifyListeners();
+    return res;
   }
 
-  static Future<List<String>> getSpecificList(String key) async {
+  Future<List<String>> getSpecificList(String key) async {
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
     return sharedPreferences.getStringList(key) ?? [];
   }
 
-  static Future<bool> setCurrentListName(String value) async {
+  Future<bool> setCurrentListName(String value) async {
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
-    return await sharedPreferences.setString(_currentListKeyName, value);
+    var res = await sharedPreferences.setString(_currentListKeyName, value);
+    notifyListeners();
+    return res;
   }
 
-  static Future<String> getCurrentListName() async {
+  Future<String> getCurrentListName() async {
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
     return sharedPreferences.getString(_currentListKeyName) ?? '%default%';
   }
 
-  static Future<List<String>> getAllListsNames() async {
+  Future<List<String>> getAllListsNames() async {
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
     return sharedPreferences.getStringList(allListsKeyName) ?? ['default'];
   }
 
-  static Future<bool> setAllListsNames(List<String> value) async {
+  Future<bool> setAllListsNames(List<String> value) async {
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
-    return await sharedPreferences.setStringList(allListsKeyName, value);
+    var res = await sharedPreferences.setStringList(allListsKeyName, value);
+    notifyListeners();
+    return res;
   }
 
-  static Future<bool> deleteWholeList(String value) async {
+  Future<bool> deleteWholeList(String value) async {
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
     List<String> allList =
         sharedPreferences.getStringList(allListsKeyName) ?? [];
     allList.remove(value);
     await sharedPreferences.setStringList(allListsKeyName, allList);
-    return await sharedPreferences.remove(value);
+    var res = await sharedPreferences.remove(value);
+    notifyListeners();
+    return res;
   }
 }

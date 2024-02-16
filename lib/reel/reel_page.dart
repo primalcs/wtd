@@ -15,33 +15,42 @@ class _ReelPageState extends State<ReelPage> {
   late List<Widget> children;
   late ReelWidget reel;
   List<String> _currentList = [];
+  List<String> _allListNames = [];
   String _currentListName = "";
+  final Helper helper = Helper();
 
   @override
   void initState() {
     super.initState();
     _prepare();
     _loadList();
+    _reinit(_currentList);
+    helper.addListener(() async {
+      await _update();
+    });
+  }
+
+  Future _update() async {
+    _currentListName = await helper.getCurrentListName();
+    var currentList = await helper.getSpecificList(_currentListName);
+    _reinit(currentList);
   }
 
   void _prepare() async {
-    // var key = await Helper.getCurrentListName();
-    Helper.setSpecificList("cobold", ["nol", "celkoviy"]);
-    Helper.setSpecificList("default", ["Do nothing"]);
-    Helper.setAllListsNames(["default", "cobold"]);
-    await Helper.setCurrentListName("cobold");
+    _allListNames = await helper.getAllListsNames();
+    _currentListName = await helper.getCurrentListName();
+    return Future(() => true);
   }
 
   void _loadList({String name = ""}) async {
     if (name.isEmpty) {
-      name = await Helper.getCurrentListName();
+      name = await helper.getCurrentListName();
     }
     _currentListName = name;
-    var currentList = await Helper.getSpecificList(name);
+    var currentList = await helper.getSpecificList(name);
     if (currentList.isEmpty) return;
-    setState(() {
-      _reinit(currentList);
-    });
+    _reinit(currentList);
+    return;
   }
 
   void _reinit(currentList) {
@@ -51,15 +60,11 @@ class _ReelPageState extends State<ReelPage> {
       childSize: 40,
       children: children,
     );
-  }
-
-  Widget createHeader() {
-    return ExpandingListView(mode: false, currentText: _currentListName);
+    setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
-    _reinit(_currentList);
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
@@ -71,20 +76,20 @@ class _ReelPageState extends State<ReelPage> {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             DropdownMenu(
-              // controller: iconController,
               requestFocusOnTap: true,
               label: const Text('Activities'),
               inputDecorationTheme: const InputDecorationTheme(
-                // filled: true,
                 contentPadding: EdgeInsets.symmetric(vertical: 5.0),
               ),
-              onSelected: (icon) {
+              initialSelection: _currentListName,
+              onSelected: (value) {
                 setState(() {
-                  // selectedIcon = icon;
+                  _loadList(name: value.toString());
                 });
               },
               dropdownMenuEntries: [
-                DropdownMenuEntry(value: "value", label: "label")
+                for (String i in _allListNames)
+                  DropdownMenuEntry(value: i, label: i)
               ],
             ),
             reel,
@@ -92,39 +97,13 @@ class _ReelPageState extends State<ReelPage> {
               child: const Text(
                 "Roll the Drum!",
               ),
-              onPressed: () => reel.runAnimation(),
+              onPressed: () {
+                reel.runAnimation();
+              },
             ),
           ],
         ),
       ),
     );
-  }
-}
-
-class ExpandingListView extends StatefulWidget {
-  final bool mode;
-  final String currentText;
-  const ExpandingListView(
-      {Key? key, required this.mode, required this.currentText})
-      : super(key: key);
-
-  @override
-  _ExpandingListViewState createState() => _ExpandingListViewState();
-}
-
-class _ExpandingListViewState extends State<ExpandingListView> {
-  @override
-  Widget build(BuildContext context) {
-    if (!widget.mode) {
-      return Flexible(
-        child: Card(
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Text(widget.currentText),
-          ),
-        ),
-      );
-    }
-    return Container();
   }
 }

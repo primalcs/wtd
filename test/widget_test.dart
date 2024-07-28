@@ -7,13 +7,19 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:wtdapp/main.dart';
+import 'package:wtdapp/utils/storage_service.dart';
 
 void main() {
   testWidgets('Counter increments smoke test', (WidgetTester tester) async {
     // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+    final storage =
+        Helper(sharedPreferences: await SharedPreferences.getInstance());
+    await tester.pumpWidget(MyApp(
+      storage: storage,
+    ));
 
     // Verify that our counter starts at 0.
     expect(find.text('0'), findsOneWidget);

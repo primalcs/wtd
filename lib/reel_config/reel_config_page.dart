@@ -3,33 +3,24 @@ import 'package:wtdapp/reel_config/custom_list_views.dart';
 import 'package:wtdapp/utils/storage_service.dart';
 
 class ReelConfigPage extends StatefulWidget {
-  const ReelConfigPage({Key? key}) : super(key: key);
+  const ReelConfigPage({super.key, required this.storage});
   final String title = "";
+  final Helper storage;
 
   @override
   _ReelConfigPageState createState() => _ReelConfigPageState();
 }
 
 class _ReelConfigPageState extends State<ReelConfigPage> {
-  final Helper helper = Helper();
   String _currentListName = "";
   List<String> _currentList = [];
-  CurrentListView _currentListWidgets = CurrentListView(
-    childrenList: const [],
-    onDeleteFunction: () {},
-    onReorderFunction: () {},
-  );
+  CurrentListView? _currentListWidgets;
   static const double _minCurrentListWidth = 250;
   double _currentListWidth = _minCurrentListWidth;
   final currentListTextInputController = TextEditingController();
 
   List<String> _allLists = [];
-  AllListView _allListWidgets = AllListView(
-    childrenList: const [],
-    onTapFunction: () {},
-    onDeleteFunction: () {},
-    onReorderFunction: () {},
-  );
+  AllListView? _allListWidgets;
   static const double _minAllListWidth = 210;
   double _allListWidth = _minAllListWidth;
   final allListTextInputController = TextEditingController();
@@ -68,7 +59,7 @@ class _ReelConfigPageState extends State<ReelConfigPage> {
     if (listName == _currentListName) {
       return;
     }
-    var currentList = await helper.getSpecificList(listName);
+    var currentList = await widget.storage.getSpecificList(listName);
     _currentList = currentList;
 
     setState(() {
@@ -79,7 +70,7 @@ class _ReelConfigPageState extends State<ReelConfigPage> {
   void _addToCurrentList(String text) async {
     if (_currentListName.isEmpty) return;
     _currentList.add(text);
-    await helper.setSpecificList(_currentListName, _currentList);
+    await widget.storage.setSpecificList(_currentListName, _currentList);
     setState(() {
       _reinitCurrentListWidgets();
     });
@@ -87,13 +78,13 @@ class _ReelConfigPageState extends State<ReelConfigPage> {
 
   void _onCurrentListReorder(List<String> children) async {
     _currentList = children;
-    await helper.setSpecificList(_currentListName, children);
+    await widget.storage.setSpecificList(_currentListName, children);
     // _reinitCurrentListWidgets();
   }
 
   void _onCurrentListDelete(int index) async {
     _currentList.removeAt(index);
-    await helper.setSpecificList(_currentListName, _currentList);
+    await widget.storage.setSpecificList(_currentListName, _currentList);
     _reinitCurrentListWidgets();
   }
 
@@ -104,12 +95,13 @@ class _ReelConfigPageState extends State<ReelConfigPage> {
       onReorderFunction: _onCurrentListReorder,
       colorDefault: Theme.of(context).cardColor,
       colorSelected: Theme.of(context).highlightColor,
+      storage: widget.storage,
     );
   }
 
   // AllList
   void _loadAllList() async {
-    var allList = await helper.getAllListsNames();
+    var allList = await widget.storage.getAllListsNames();
     if (allList.isEmpty) return;
     setState(() {
       _allLists = allList;
@@ -118,9 +110,10 @@ class _ReelConfigPageState extends State<ReelConfigPage> {
   }
 
   void _addToAllLists(String text) async {
+    if (text.isEmpty) return;
     if (_allLists.contains(text)) return;
     _allLists.add(text);
-    await helper.setSpecificList(Helper.allListsKeyName, _allLists);
+    await widget.storage.setSpecificList(Helper.allListsKeyName, _allLists);
     setState(() {
       _reinitAllListWidgets();
     });
@@ -131,7 +124,7 @@ class _ReelConfigPageState extends State<ReelConfigPage> {
     _currentList = [];
     String listName = _allLists.elementAt(index);
     _allLists.removeAt(index);
-    await helper.deleteWholeList(listName);
+    await widget.storage.deleteWholeList(listName);
     setState(() {
       _reinitCurrentListWidgets();
       _reinitAllListWidgets();
@@ -140,7 +133,7 @@ class _ReelConfigPageState extends State<ReelConfigPage> {
 
   void _onAllListReorder(List<String> children) async {
     _allLists = children;
-    await helper.setAllListsNames(children);
+    await widget.storage.setAllListsNames(children);
   }
 
   void _reinitAllListWidgets() {
@@ -152,6 +145,7 @@ class _ReelConfigPageState extends State<ReelConfigPage> {
       onTapFunction: _setCurrentListName,
       onDeleteFunction: _onAllListDelete,
       onReorderFunction: _onAllListReorder,
+      storage: widget.storage,
     );
   }
 
@@ -166,102 +160,105 @@ class _ReelConfigPageState extends State<ReelConfigPage> {
       _currentListWidth = maxWidth / 2;
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.title),
-      ),
-      body: Row(
-        mainAxisAlignment: MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          // All list
-          GestureDetector(
-            child: SizedBox(
-              width: _allListWidth,
-              child: Column(
-                children: [
-                  Flexible(
-                    fit: FlexFit.tight,
-                    child: _allListWidgets,
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(8),
-                    child: Row(
-                      children: [
-                        Flexible(
-                          fit: FlexFit.loose,
-                          child: TextField(
-                            controller: allListTextInputController,
-                            decoration: const InputDecoration(
-                              border: OutlineInputBorder(),
-                              labelText: 'New activity list',
+    return Theme(
+      data: Theme.of(context),
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(widget.title),
+        ),
+        body: Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // All list
+            GestureDetector(
+              child: SizedBox(
+                width: _allListWidth,
+                child: Column(
+                  children: [
+                    Flexible(
+                      fit: FlexFit.tight,
+                      child: _allListWidgets ?? const Placeholder(),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(8),
+                      child: Row(
+                        children: [
+                          Flexible(
+                            fit: FlexFit.loose,
+                            child: TextField(
+                              controller: allListTextInputController,
+                              decoration: const InputDecoration(
+                                border: OutlineInputBorder(),
+                                labelText: 'New activity list',
+                              ),
                             ),
                           ),
-                        ),
-                        ElevatedButton(
+                          ElevatedButton(
+                              onPressed: () {
+                                _addToAllLists(
+                                    allListTextInputController.value.text);
+                              },
+                              child: const Text("Add")),
+                        ],
+                      ),
+                    )
+                  ],
+                ),
+              ),
+              onHorizontalDragUpdate: (details) {
+                final dx = details.delta.dx;
+                setState(() {
+                  resizeBars(dx);
+                });
+              },
+            ),
+            // Current list
+            GestureDetector(
+              child: SizedBox(
+                width: _currentListWidth,
+                child: Column(
+                  children: [
+                    Flexible(
+                      fit: FlexFit.loose,
+                      child: _currentListWidgets ?? Container(),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(8),
+                      child: Row(
+                        children: [
+                          Flexible(
+                            fit: FlexFit.loose,
+                            child: TextField(
+                              controller: currentListTextInputController,
+                              decoration: const InputDecoration(
+                                border: OutlineInputBorder(),
+                                labelText: 'New activity',
+                              ),
+                            ),
+                          ),
+                          ElevatedButton(
                             onPressed: () {
-                              _addToAllLists(
-                                  allListTextInputController.value.text);
+                              _addToCurrentList(
+                                  currentListTextInputController.value.text);
                             },
-                            child: const Text("Add")),
-                      ],
-                    ),
-                  )
-                ],
-              ),
-            ),
-            onHorizontalDragUpdate: (details) {
-              final dx = details.delta.dx;
-              setState(() {
-                resizeBars(dx);
-              });
-            },
-          ),
-          // Current list
-          GestureDetector(
-            child: SizedBox(
-              width: _currentListWidth,
-              child: Column(
-                children: [
-                  Flexible(
-                    fit: FlexFit.loose,
-                    child: _currentListWidgets,
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(8),
-                    child: Row(
-                      children: [
-                        Flexible(
-                          fit: FlexFit.loose,
-                          child: TextField(
-                            controller: currentListTextInputController,
-                            decoration: const InputDecoration(
-                              border: OutlineInputBorder(),
-                              labelText: 'New activity',
-                            ),
+                            child: const Text("Add"),
                           ),
-                        ),
-                        ElevatedButton(
-                          onPressed: () {
-                            _addToCurrentList(
-                                currentListTextInputController.value.text);
-                          },
-                          child: const Text("Add"),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
+              onHorizontalDragUpdate: (details) {
+                final dx = details.delta.dx;
+                setState(() {
+                  resizeBars(dx);
+                });
+              },
             ),
-            onHorizontalDragUpdate: (details) {
-              final dx = details.delta.dx;
-              setState(() {
-                resizeBars(dx);
-              });
-            },
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

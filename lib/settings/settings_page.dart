@@ -1,29 +1,39 @@
 import 'package:flex_color_picker/flex_color_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+// import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:wtdapp/utils/storage_service.dart';
 
 class SettingsPage extends StatefulWidget {
-  const SettingsPage({Key? key}) : super(key: key);
+  const SettingsPage({super.key, required this.storage});
   final String title = "";
+  final Helper storage;
 
   @override
   State<SettingsPage> createState() => _SettingsPageState();
 }
 
 class _SettingsPageState extends State<SettingsPage> {
-  bool _isDark = false;
-  Color selectedColor = Colors.blue; // Set an initial color
   late ColorPicker _colorPicker;
+
+  void init() {}
 
   @override
   void initState() {
     super.initState();
+    widget.storage.addListener(() {
+      if (mounted) {
+        setState(() {});
+      }
+    });
+    _updateColorPicker();
+  }
+
+  void _updateColorPicker() {
     _colorPicker = ColorPicker(
-      color: selectedColor,
-      onColorChanged: (Color color) {
-        setState(() {
-          selectedColor = color;
-        });
+      color: widget.storage.initialColor,
+      onColorChanged: (Color color) async {
+        await widget.storage.setCurrentColor(color);
       },
     );
   }
@@ -31,7 +41,7 @@ class _SettingsPageState extends State<SettingsPage> {
   @override
   Widget build(BuildContext context) {
     return Theme(
-      data: _isDark ? ThemeData.dark() : ThemeData.light(),
+      data: Theme.of(context),
       child: Scaffold(
         appBar: AppBar(
           title: Text(widget.title),
@@ -48,11 +58,9 @@ class _SettingsPageState extends State<SettingsPage> {
                       title: "Dark Mode",
                       icon: Icons.dark_mode_outlined,
                       trailing: Switch(
-                        value: _isDark,
-                        onChanged: (value) {
-                          setState(() {
-                            _isDark = value;
-                          });
+                        value: widget.storage.initialColorMode,
+                        onChanged: (value) async {
+                          await widget.storage.setCurrentColorMode(value);
                         },
                       ),
                       onTapFunc: () {},
@@ -63,10 +71,9 @@ class _SettingsPageState extends State<SettingsPage> {
                       trailing: Container(
                         width: 40,
                         height: 40,
-                        // color: selectedColor,
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(12),
-                          color: selectedColor,
+                          color: widget.storage.initialColor,
                         ),
                       ),
                       onTapFunc: () {
@@ -76,6 +83,16 @@ class _SettingsPageState extends State<SettingsPage> {
                     _CustomListTile(
                       title: "Language",
                       icon: CupertinoIcons.textformat_abc,
+                      trailing: DropdownMenu(
+                        initialSelection: widget.storage.initialLanguage,
+                        dropdownMenuEntries: const [
+                          DropdownMenuEntry(value: "en", label: "English"),
+                          DropdownMenuEntry(value: "ru", label: "Русский"),
+                        ],
+                        onSelected: (value) {
+                          widget.storage.setCurrentLanguage(value.toString());
+                        },
+                      ),
                       onTapFunc: () {},
                     ),
                   ],
@@ -96,12 +113,10 @@ class _CustomListTile extends StatelessWidget {
   final Widget? trailing;
   final Function onTapFunc;
   const _CustomListTile(
-      {Key? key,
-      required this.title,
+      {required this.title,
       required this.icon,
       this.trailing,
-      required this.onTapFunc})
-      : super(key: key);
+      required this.onTapFunc});
 
   @override
   Widget build(BuildContext context) {
@@ -120,10 +135,9 @@ class _SingleSection extends StatelessWidget {
   final String? title;
   final List<Widget> children;
   const _SingleSection({
-    Key? key,
     this.title,
     required this.children,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -146,7 +160,6 @@ class _SingleSection extends StatelessWidget {
     );
   }
 }
-
 
 // f() =>
 

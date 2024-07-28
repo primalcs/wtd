@@ -36,7 +36,11 @@ dependencies:
   cupertino_icons: ^1.0.2
   shared_preferences: ^2.2.2
   flex_color_picker: ^3.3.1
-
+  flutter_localizations:
+    sdk: flutter
+  intl: any
+  auto_size_text: ^3.0.0
+  
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -46,13 +50,18 @@ dev_dependencies:
   # activated in the `analysis_options.yaml` file located at the root of your
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
-  flutter_lints: ^3.0.1
+  flutter_lints: ^4.0.0
+  build_runner: ^2.4.8
+  
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
+  # build_runner: any
+  #   flutter_gen_runner:
 
 # The following section is specific to Flutter packages.
 flutter:
+  generate: true # Add this line
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
